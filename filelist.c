@@ -36,7 +36,11 @@ void flist_delete(struct flist *l)
 
 int flist_add(struct flist *l, const char *path)
 {
-	FILE *f = fopen(path, "r");
+	FILE *f;
+	if (strcmp(path, "-"))
+		f = fopen(path, "r");
+	else
+		f = stdin;
 
 	if (!f) {
 		fprintf(stderr, "Failed to open input file '%s': %s", path, strerror(errno));
