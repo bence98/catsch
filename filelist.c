@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define FLIST_READ
 #include "filelist.h"
@@ -45,6 +46,16 @@ void flist_delete(struct flist *l)
 	free(l);
 }
 
+static FILE *_get_stdin(void)
+{
+	int fd = dup(STDIN_FILENO);
+
+	if (fd < 0)
+		return NULL;
+
+	return fdopen(fd, "r");
+}
+
 static int _flist_open(struct flist_entry *e)
 {
 	if (e->f)
@@ -53,7 +64,7 @@ static int _flist_open(struct flist_entry *e)
 	if (strcmp(e->name, "-"))
 		e->f = fopen(e->name, "r");
 	else
-		e->f = stdin;
+		e->f = _get_stdin();
 
 	if (!e->f) {
 		fprintf(stderr, "Failed to open input file '%s': %s", e->name, strerror(errno));
