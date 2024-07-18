@@ -44,25 +44,25 @@ int main(int argc, char* argv[])
 
 	bool doPrint = rand() < (RAND_MAX * 0.5);
 
-	if (argc > 1) {
-		struct flist *l = flist_new();
-		if (!l) {
-			perror("Could not set up input file list");
-			return -ENOMEM;
-		}
+	struct flist *l = flist_new();
+	if (!l) {
+		perror("Could not set up input file list");
+		return -ENOMEM;
+	}
 
-		for (int i = 1; i < argc; i++) {
-			err = flist_add(l, argv[i]);
-			if (err)
-				return err;
-		}
+	for (int i = 1; i < argc; i++) {
+		err = flist_add(l, argv[i]);
+		if (err)
+			return err;
+	}
 
+	if (l->head) {
 		err = flist_foreach(l, cb_do_cat, &doPrint);
-
-		flist_delete(l);
 	} else {
 		err = do_cat(stdin, doPrint);
 	}
+
+	flist_delete(l);
 
 	return err;
 }
