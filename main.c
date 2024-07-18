@@ -1,4 +1,4 @@
-//
+// SPDX-License-Identifier: GPL-3.0-or-later
 
 /*
  * Schrödinger's `cat`: Maybe print the contents of a file
