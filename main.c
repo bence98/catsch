@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include <time.h>
 
+#define FLIST_READ
+#include "filelist.h"
+
 int do_cat(FILE *f, bool doPrint)
 {
 	char buf[1024];
@@ -29,15 +32,37 @@ int do_cat(FILE *f, bool doPrint)
 	}
 }
 
+static int cb_do_cat(FILE *f, void *userdata)
+{
+	return do_cat(f, *((bool *)userdata));
+}
+
 int main(int argc, char* argv[])
 {
 	srand(time(NULL));
-	FILE *f = stdin;
 	int err;
 
 	bool doPrint = rand() < (RAND_MAX * 0.5);
 
-	err = do_cat(f, doPrint);
+	if (argc > 1) {
+		struct flist *l = flist_new();
+		if (!l) {
+			perror("Could not set up input file list");
+			return -ENOMEM;
+		}
+
+		for (int i = 1; i < argc; i++) {
+			err = flist_add(l, argv[i]);
+			if (err)
+				return err;
+		}
+
+		err = flist_foreach(l, cb_do_cat, &doPrint);
+
+		flist_delete(l);
+	} else {
+		err = do_cat(stdin, doPrint);
+	}
 
 	return err;
 }

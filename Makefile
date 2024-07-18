@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 TARGET = catsch
-OBJS = main.o
+OBJS = filelist.o main.o
 
 .PHONY: all
 all: ${TARGET}
@@ -11,4 +11,4 @@ clean:
 	rm -f ${TARGET} ${OBJS}
 
 ${TARGET}: ${OBJS}
-	${CC} -o $@ $<
+	${CC} -o $@ $^
