@@ -16,6 +16,17 @@ struct flist *flist_new()
 	return calloc(1, sizeof(struct flist));
 }
 
+static int _flist_close(struct flist_entry *e)
+{
+	int err = 0;
+
+	if (e->f)
+		err = fclose(e->f);
+	e->f = NULL;
+
+	return err;
+}
+
 void flist_delete(struct flist *l)
 {
 	struct flist_entry *e = l->head;
@@ -23,7 +34,7 @@ void flist_delete(struct flist *l)
 	while (e) {
 		struct flist_entry *next = e->next;
 
-		fclose(e->f);
+		_flist_close(e);
 		free(e);
 
 		if (e == l->tail)
@@ -34,19 +45,26 @@ void flist_delete(struct flist *l)
 	free(l);
 }
 
-int flist_add(struct flist *l, const char *path)
+static int _flist_open(struct flist_entry *e)
 {
-	FILE *f;
-	if (strcmp(path, "-"))
-		f = fopen(path, "r");
-	else
-		f = stdin;
+	if (e->f)
+		return 0;
 
-	if (!f) {
-		fprintf(stderr, "Failed to open input file '%s': %s", path, strerror(errno));
+	if (strcmp(e->name, "-"))
+		e->f = fopen(e->name, "r");
+	else
+		e->f = stdin;
+
+	if (!e->f) {
+		fprintf(stderr, "Failed to open input file '%s': %s", e->name, strerror(errno));
 		return -ENOENT;
 	}
 
+	return 0;
+}
+
+int flist_add(struct flist *l, const char *path)
+{
 	struct flist_entry *e = malloc(sizeof(struct flist_entry));
 
 	if (!e) {
@@ -56,7 +74,7 @@ int flist_add(struct flist *l, const char *path)
 
 	e->next = NULL;
 	e->name = path;
-	e->f    = f;
+	e->f    = NULL;
 
 	if (!l->head)
 		l->head = e;
@@ -74,8 +92,15 @@ int flist_foreach(struct flist *l, int (*fn)(FILE *, void *), void *userdata)
 	int err = 0;
 
 	while (e) {
-		err = fn(e->f, userdata);
+		err = _flist_open(e);
+		if (err < 0)
+			return err;
 
+		err = fn(e->f, userdata);
+		if (err < 0)
+			return err;
+
+		err = _flist_close(e);
 		if (err < 0)
 			return err;
 
