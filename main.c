@@ -74,11 +74,9 @@ int main(int argc, char* argv[])
 	while ((opt = getopt_long(argc, argv, "hs:p:", opts, NULL)) != -1)
 		switch (opt) {
 		case 's':
-			errno = 0;
-			long seed = strtol(optarg, NULL, 0);
-			if(errno)
-				fprintf(stderr, "Invalid seed '%s': %s", optarg, strerror(errno));
-			else
+			int parse_ok = 0;
+			long seed = util_parse_seed(optarg, &parse_ok);
+			if(parse_ok)
 				prng_seed(prng, seed);
 			break;
 		case 'p':
