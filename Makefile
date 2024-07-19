@@ -1,7 +1,8 @@
 #!/usr/bin/make -f
 
 TARGET = catsch
-OBJS = filelist.o rng.o rng/libc.o main.o
+OBJS = filelist.o rng.o rng/libc.o util.o
+OBJS += main.o
 
 .PHONY: all
 all: ${TARGET}

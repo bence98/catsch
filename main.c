@@ -15,6 +15,7 @@
 #define FLIST_READ
 #include "filelist.h"
 #include "rng.h"
+#include "util.h"
 
 int do_cat(FILE *f, bool doPrint)
 {
@@ -51,12 +52,14 @@ static void print_help(const char *prog)
 		"input.\n"
 		"Opts:\n"
 		"\t-s/--seed [seed] \t- the seed for the PRNG\n"
+		"\t-p/--probability [p] \t- probability of printing, in decimal between 0.0-1.0, or in percent 0%%-100%%\n"
 		"", prog);
 }
 
 static const struct option opts[] = {
 	{ "help", 0, NULL, 'h' },
 	{ "seed", 1, NULL, 's' },
+	{ "probability", 1, NULL, 'p' },
 	{ }
 };
 
@@ -68,7 +71,7 @@ int main(int argc, char* argv[])
 	prng_init(prng);
 	prng->p = 0.5;
 
-	while ((opt = getopt_long(argc, argv, "hs:", opts, NULL)) != -1)
+	while ((opt = getopt_long(argc, argv, "hs:p:", opts, NULL)) != -1)
 		switch (opt) {
 		case 's':
 			errno = 0;
@@ -77,6 +80,9 @@ int main(int argc, char* argv[])
 				fprintf(stderr, "Invalid seed '%s': %s", optarg, strerror(errno));
 			else
 				prng_seed(prng, seed);
+			break;
+		case 'p':
+			prng->p = util_parse_prob(optarg);
 			break;
 		default:
 			print_help(argv[0]);
