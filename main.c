@@ -17,13 +17,14 @@
 #include "rng.h"
 #include "util.h"
 
-int do_cat(FILE *f, bool doPrint)
+int do_cat(FILE *f, void *userdata)
 {
+	struct prng_t *prng = (struct prng_t *)userdata;
 	char buf[1024];
 
 	while (!feof(f)) {
 		size_t len = fread(buf, 1, sizeof(buf), f);
-		if (doPrint) {
+		if (prng->doPrint) {
 			size_t written = 0;
 			while (written != len && !ferror(stdout))
 				written += fwrite(buf + written, 1, len - written, stdout);
@@ -34,11 +35,6 @@ int do_cat(FILE *f, bool doPrint)
 			}
 		}
 	}
-}
-
-static int cb_do_cat(FILE *f, void *userdata)
-{
-	return do_cat(f, *((bool *)userdata));
 }
 
 static void print_help(const char *prog)
@@ -102,9 +98,9 @@ int main(int argc, char* argv[])
 	}
 
 	if (l->head) {
-		err = flist_foreach(l, cb_do_cat, &prng->doPrint);
+		err = flist_foreach(l, do_cat, prng);
 	} else {
-		err = do_cat(stdin, prng->doPrint);
+		err = do_cat(stdin, prng);
 	}
 
 	flist_delete(l);
