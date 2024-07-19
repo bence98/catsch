@@ -9,11 +9,12 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+#include <string.h>
 #include <unistd.h>
 
 #define FLIST_READ
 #include "filelist.h"
+#include "rng.h"
 
 int do_cat(FILE *f, bool doPrint)
 {
@@ -61,20 +62,28 @@ static const struct option opts[] = {
 
 int main(int argc, char* argv[])
 {
-	srand(time(NULL));
 	int err, opt;
+
+	struct prng_t *prng = prng_get_default();
+	prng_init(prng);
+	prng->p = 0.5;
 
 	while ((opt = getopt_long(argc, argv, "hs:", opts, NULL)) != -1)
 		switch (opt) {
 		case 's':
-			srand(atoi(optarg));
+			errno = 0;
+			long seed = strtol(optarg, NULL, 0);
+			if(errno)
+				fprintf(stderr, "Invalid seed '%s': %s", optarg, strerror(errno));
+			else
+				prng_seed(prng, seed);
 			break;
 		default:
 			print_help(argv[0]);
 			return (opt == 'h') ? 0 : -EINVAL;
 		}
 
-	bool doPrint = rand() < (RAND_MAX * 0.5);
+	prng_cycle(prng);
 
 	struct flist *l = flist_new();
 	if (!l) {
@@ -89,12 +98,13 @@ int main(int argc, char* argv[])
 	}
 
 	if (l->head) {
-		err = flist_foreach(l, cb_do_cat, &doPrint);
+		err = flist_foreach(l, cb_do_cat, &prng->doPrint);
 	} else {
-		err = do_cat(stdin, doPrint);
+		err = do_cat(stdin, prng->doPrint);
 	}
 
 	flist_delete(l);
+	prng_destroy(prng);
 
 	return err;
 }
