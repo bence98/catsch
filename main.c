@@ -12,30 +12,10 @@
 #include <string.h>
 #include <unistd.h>
 
-#define FLIST_READ
 #include "filelist.h"
+#include "cat.h"
 #include "rng.h"
 #include "util.h"
-
-int do_cat(FILE *f, void *userdata)
-{
-	struct prng_t *prng = (struct prng_t *)userdata;
-	char buf[1024];
-
-	while (!feof(f)) {
-		size_t len = fread(buf, 1, sizeof(buf), f);
-		if (prng->doPrint) {
-			size_t written = 0;
-			while (written != len && !ferror(stdout))
-				written += fwrite(buf + written, 1, len - written, stdout);
-
-			if (written != len) {
-				fprintf(stderr, "Error while writing output!\n");
-				return -EIO;
-			}
-		}
-	}
-}
 
 static void print_help(const char *prog)
 {
@@ -97,11 +77,7 @@ int main(int argc, char* argv[])
 			return err;
 	}
 
-	if (l->head) {
-		err = flist_foreach(l, do_cat, prng);
-	} else {
-		err = do_cat(stdin, prng);
-	}
+	err = cat_files(l, prng);
 
 	flist_delete(l);
 	prng_destroy(prng);
