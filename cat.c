@@ -23,7 +23,13 @@ static int do_cat(FILE *f, void *userdata)
 				return -EIO;
 			}
 		}
+
+		if (prng->reroll_opts.block)
+			prng_cycle(prng);
 	}
+
+	if (prng->reroll_opts.file)
+		prng_cycle(prng);
 
 	return 0;
 }

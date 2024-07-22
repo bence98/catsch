@@ -25,6 +25,8 @@ static void print_help(const char *prog)
 		"Opts:\n"
 		"\t-s/--seed [seed] \t- the seed for the PRNG\n"
 		"\t-p/--probability [p] \t- probability of printing, in decimal between 0.0-1.0, or in percent 0%%-100%%\n"
+		"\t-r/--reroll \t- re-roll random number after each write (1 KiB by default)\n"
+		"\t-f/--reroll-files \t- re-roll random number for each input file\n"
 		"", prog);
 }
 
@@ -32,6 +34,8 @@ static const struct option opts[] = {
 	{ "help", 0, NULL, 'h' },
 	{ "seed", 1, NULL, 's' },
 	{ "probability", 1, NULL, 'p' },
+	{ "reroll", 0, NULL, 'r' },
+	{ "reroll-files", 0, NULL, 'f' },
 	{ }
 };
 
@@ -43,7 +47,7 @@ int main(int argc, char* argv[])
 	prng_init(prng);
 	prng->p = 0.5;
 
-	while ((opt = getopt_long(argc, argv, "hs:p:", opts, NULL)) != -1)
+	while ((opt = getopt_long(argc, argv, "hs:p:rf", opts, NULL)) != -1)
 		switch (opt) {
 		case 's':
 			int parse_ok = 0;
@@ -53,6 +57,12 @@ int main(int argc, char* argv[])
 			break;
 		case 'p':
 			prng->p = util_parse_prob(optarg);
+			break;
+		case 'r':
+			prng->reroll_opts.block = true;
+			break;
+		case 'f':
+			prng->reroll_opts.file = true;
 			break;
 		default:
 			print_help(argv[0]);
