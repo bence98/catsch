@@ -25,7 +25,7 @@ static int _flist_close(struct flist_entry *e)
 		err = fclose(e->f);
 	e->f = NULL;
 
-	return err;
+	return err ? errno : 0;
 }
 
 int flist_delete(struct flist *l)
