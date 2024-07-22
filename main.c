@@ -27,6 +27,7 @@ static void print_help(const char *prog)
 		"\t-p/--probability [p] \t- probability of printing, in decimal between 0.0-1.0, or in percent 0%%-100%%\n"
 		"\t-r/--reroll \t- re-roll random number after each write (1 KiB by default)\n"
 		"\t-f/--reroll-files \t- re-roll random number for each input file\n"
+		"\t-l/--linewise \t- read files line-by-line. Use with -r to randomize lines\n"
 		"", prog);
 }
 
@@ -36,18 +37,19 @@ static const struct option opts[] = {
 	{ "probability", 1, NULL, 'p' },
 	{ "reroll", 0, NULL, 'r' },
 	{ "reroll-files", 0, NULL, 'f' },
+	{ "linewise", 0, NULL, 'l' },
 	{ }
 };
 
 int main(int argc, char* argv[])
 {
-	int err, opt;
+	int err, opt, cat_opts = 0;
 
 	struct prng_t *prng = prng_get_default();
 	prng_init(prng);
 	prng->p = 0.5;
 
-	while ((opt = getopt_long(argc, argv, "hs:p:rf", opts, NULL)) != -1)
+	while ((opt = getopt_long(argc, argv, "hs:p:rfl", opts, NULL)) != -1)
 		switch (opt) {
 		case 's':
 			int parse_ok = 0;
@@ -63,6 +65,9 @@ int main(int argc, char* argv[])
 			break;
 		case 'f':
 			prng->reroll_opts.file = true;
+			break;
+		case 'l':
+			cat_opts |= CAT_OPT_LINEWISE;
 			break;
 		default:
 			print_help(argv[0]);
@@ -83,7 +88,7 @@ int main(int argc, char* argv[])
 			return err;
 	}
 
-	err = cat_files(l, prng);
+	err = cat_files(l, prng, cat_opts);
 
 	flist_delete(l);
 	prng_destroy(prng);
