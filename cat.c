@@ -11,6 +11,7 @@ static int cat_block(FILE *f, void *userdata)
 {
 	struct prng_t *prng = (struct prng_t *)userdata;
 	char buf[1024];
+	int err = 0;
 
 	while (!feof(f)) {
 		size_t len = fread(buf, 1, sizeof(buf), f);
@@ -26,13 +27,16 @@ static int cat_block(FILE *f, void *userdata)
 		}
 
 		if (prng->reroll_opts.block)
-			prng_cycle(prng);
+			err = prng_cycle(prng);
+
+		if (err)
+			return err;
 	}
 
 	if (prng->reroll_opts.file)
-		prng_cycle(prng);
+		err = prng_cycle(prng);
 
-	return 0;
+	return err;
 }
 
 static int cat_tabby(FILE *f, void *userdata)
@@ -41,6 +45,7 @@ static int cat_tabby(FILE *f, void *userdata)
 	size_t buf_len = 0;
 	char *buf = NULL;
 	ssize_t len;
+	int err = 0;
 
 	while ((len = getline(&buf, &buf_len, f)) != -1) {
 		if (prng->doPrint) {
@@ -55,15 +60,18 @@ static int cat_tabby(FILE *f, void *userdata)
 		}
 
 		if (prng->reroll_opts.block)
-			prng_cycle(prng);
+			err = prng_cycle(prng);
+
+		if (err)
+			return err;
 	}
 
 	if (prng->reroll_opts.file)
-		prng_cycle(prng);
+		err = prng_cycle(prng);
 
 	free(buf);
 
-	return 0;
+	return err;
 }
 
 int cat_files(struct flist *l, struct prng_t *prng, int opts)

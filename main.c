@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "filelist.h"
 #include "cat.h"
@@ -46,7 +47,11 @@ int main(int argc, char* argv[])
 	int err, opt, cat_opts = 0;
 
 	struct prng_t *prng = prng_get_default();
-	prng_init(prng);
+	err = prng_init(prng);
+	if (err) {
+		fprintf(stderr, "Could not set up RNG: %s\n", strerror(err));
+		return err;
+	}
 	prng->p = 0.5;
 
 	while ((opt = getopt_long(argc, argv, "hs:p:rfl", opts, NULL)) != -1)
@@ -55,7 +60,11 @@ int main(int argc, char* argv[])
 			int parse_ok = 0;
 			long seed = util_parse_seed(optarg, &parse_ok);
 			if(parse_ok)
-				prng_seed(prng, seed);
+				err = prng_seed(prng, seed);
+			if (err) {
+				fprintf(stderr, "Could not seed RNG: %s\n", strerror(err));
+				return err;
+			}
 			break;
 		case 'p':
 			prng->p = util_parse_prob(optarg);
@@ -74,7 +83,11 @@ int main(int argc, char* argv[])
 			return (opt == 'h') ? 0 : -EINVAL;
 		}
 
-	prng_cycle(prng);
+	err = prng_cycle(prng);
+	if (err) {
+		fprintf(stderr, "Could not read RNG: %s\n", strerror(err));
+		return err;
+	}
 
 	struct flist *l = flist_new();
 	if (!l) {
@@ -84,14 +97,30 @@ int main(int argc, char* argv[])
 
 	for (int i = optind; i < argc; i++) {
 		err = flist_add(l, argv[i]);
-		if (err)
+		if (err) {
+			fprintf(stderr, "Error while parsing input list: %s\n", strerror(err));
 			return err;
+		}
 	}
 
 	err = cat_files(l, prng, cat_opts);
+	if (err) {
+		fprintf(stderr, "Unexpected error: %s\n", strerror(err));
+	}
 
-	flist_delete(l);
-	prng_destroy(prng);
+	int err2 = flist_delete(l);
+	if (err2) {
+		fprintf(stderr, "Error while closing input: %s\n", strerror(err));
+		if (!err)
+			err = err2;
+	}
+
+	err2 = prng_destroy(prng);
+	if (err2) {
+		fprintf(stderr, "Error while closing RNG: %s\n", strerror(err));
+		if (!err)
+			err = err2;
+	}
 
 	return err;
 }

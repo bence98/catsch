@@ -7,7 +7,7 @@ struct flist {
 };
 
 struct flist *flist_new(void);
-void flist_delete(struct flist *);
+int flist_delete(struct flist *);
 int flist_add(struct flist *, const char *);
 
 #ifdef FLIST_READ

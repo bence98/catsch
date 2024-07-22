@@ -28,15 +28,21 @@ static int _flist_close(struct flist_entry *e)
 	return err;
 }
 
-void flist_delete(struct flist *l)
+int flist_delete(struct flist *l)
 {
 	struct flist_entry *e = l->head;
+	int err;
 
 	while (e) {
 		struct flist_entry *next = e->next;
 
-		_flist_close(e);
+		err = _flist_close(e);
 		free(e);
+
+		if (err) {
+			l->head = next;
+			return err;
+		}
 
 		if (e == l->tail)
 			break;
