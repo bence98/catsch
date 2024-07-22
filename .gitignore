@@ -2,3 +2,5 @@
 catsch
 # Intermediate objects
 *.o
+# Nano swap files
+.*.swp
