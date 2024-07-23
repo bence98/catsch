@@ -6,6 +6,7 @@
 #define FLIST_READ
 #include "filelist.h"
 #include "rng.h"
+#include "util.h"
 
 static int _cat_write_out(const char *buf, size_t len, struct prng_t *prng)
 {
@@ -17,7 +18,7 @@ static int _cat_write_out(const char *buf, size_t len, struct prng_t *prng)
 			written += fwrite(buf + written, 1, len - written, stdout);
 
 		if (written != len) {
-			fprintf(stderr, "Error while writing output!\n");
+			pr_err("Error while writing output!\n");
 			return -EIO;
 		}
 	}
