@@ -7,6 +7,27 @@
 #include "filelist.h"
 #include "rng.h"
 
+static int _cat_write_out(const char *buf, size_t len, struct prng_t *prng)
+{
+	int err = 0;
+
+	if (prng->doPrint) {
+		size_t written = 0;
+		while (written != len && !ferror(stdout))
+			written += fwrite(buf + written, 1, len - written, stdout);
+
+		if (written != len) {
+			fprintf(stderr, "Error while writing output!\n");
+			return -EIO;
+		}
+	}
+
+	if (prng->reroll_opts.block)
+		err = prng_cycle(prng);
+
+	return err;
+}
+
 static int cat_block(FILE *f, void *userdata)
 {
 	struct prng_t *prng = (struct prng_t *)userdata;
@@ -15,19 +36,7 @@ static int cat_block(FILE *f, void *userdata)
 
 	while (!feof(f)) {
 		size_t len = fread(buf, 1, sizeof(buf), f);
-		if (prng->doPrint) {
-			size_t written = 0;
-			while (written != len && !ferror(stdout))
-				written += fwrite(buf + written, 1, len - written, stdout);
-
-			if (written != len) {
-				fprintf(stderr, "Error while writing output!\n");
-				return -EIO;
-			}
-		}
-
-		if (prng->reroll_opts.block)
-			err = prng_cycle(prng);
+		err = _cat_write_out(buf, len, prng);
 
 		if (err)
 			return err;
@@ -48,19 +57,7 @@ static int cat_tabby(FILE *f, void *userdata)
 	int err = 0;
 
 	while ((len = getline(&buf, &buf_len, f)) != -1) {
-		if (prng->doPrint) {
-			size_t written = 0;
-			while (written != len && !ferror(stdout))
-				written += fwrite(buf + written, 1, len - written, stdout);
-
-			if (written != len) {
-				fprintf(stderr, "Error while writing output!\n");
-				return -EIO;
-			}
-		}
-
-		if (prng->reroll_opts.block)
-			err = prng_cycle(prng);
+		err = _cat_write_out(buf, len, prng);
 
 		if (err)
 			return err;
