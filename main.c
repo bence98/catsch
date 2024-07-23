@@ -59,7 +59,7 @@ static const struct option opts[] = {
 	{ }
 };
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 	int err, opt, cat_opts = 0;
 
@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
 		case 's':
 			int parse_ok = 0;
 			long seed = util_parse_seed(optarg, &parse_ok);
-			if(parse_ok)
+			if (parse_ok)
 				err = prng_seed(prng, seed);
 			if (err) {
 				fprintf(stderr, "Could not seed RNG: %s\n", strerror(err));

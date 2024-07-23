@@ -9,7 +9,7 @@ long util_parse_seed(const char *str, int *parse_ok)
 	char *end;
 	errno = 0;
 	long seed = strtol(str, &end, 0);
-	if(errno)
+	if (errno)
 		fprintf(stderr, "Unable to parse '%s': %s\n", str, strerror(errno));
 	else if (end == str || *end)
 		fprintf(stderr, "Invalid number '%s'\n", str);
@@ -24,7 +24,7 @@ double util_parse_prob(const char *str)
 	char *end;
 	errno = 0;
 	double p = strtod(str, &end);
-	if(errno)
+	if (errno)
 		fprintf(stderr, "Unable to parse '%s': %s\n", str, strerror(errno));
 	else if (end == str)
 		fprintf(stderr, "Invalid number '%s'\n", str);
