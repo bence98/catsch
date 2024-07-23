@@ -14,6 +14,21 @@
 #include "rng.h"
 #include "util.h"
 
+static int _switch_rng(struct prng_t **pprng, const char *name)
+{
+	float p = (*pprng)->p;
+	int err = prng_destroy(*pprng);
+	if (err)
+		return err;
+
+	*pprng = prng_get(name);
+	if (!*pprng)
+		return -EINVAL;
+
+	(*pprng)->p = p;
+	return prng_init(*pprng);
+}
+
 static void print_help(const char *prog)
 {
 	fprintf(stderr, "Usage: %s [opts...] [FILEs...]\n\n"
@@ -29,6 +44,7 @@ static void print_help(const char *prog)
 		"\t-r/--reroll \t- re-roll random number after each write (1 KiB by default)\n"
 		"\t-f/--reroll-files \t- re-roll random number for each input file\n"
 		"\t-l/--linewise \t- read files line-by-line. Use with -r to randomize lines\n"
+		"\t-g/--generator [gen] \t- use a specific RNG. Possible values: libc, urandom"
 		"", prog);
 }
 
@@ -39,6 +55,7 @@ static const struct option opts[] = {
 	{ "reroll", 0, NULL, 'r' },
 	{ "reroll-files", 0, NULL, 'f' },
 	{ "linewise", 0, NULL, 'l' },
+	{ "generator", 1, NULL, 'g' },
 	{ }
 };
 
@@ -54,7 +71,7 @@ int main(int argc, char* argv[])
 	}
 	prng->p = 0.5;
 
-	while ((opt = getopt_long(argc, argv, "hs:p:rfl", opts, NULL)) != -1)
+	while ((opt = getopt_long(argc, argv, "hs:p:g:rfl", opts, NULL)) != -1)
 		switch (opt) {
 		case 's':
 			int parse_ok = 0;
@@ -68,6 +85,13 @@ int main(int argc, char* argv[])
 			break;
 		case 'p':
 			prng->p = util_parse_prob(optarg);
+			break;
+		case 'g':
+			err = _switch_rng(&prng, optarg);
+			if (err) {
+				fprintf(stderr, "Could not switch RNG: %s\n", strerror(err));
+				return err;
+			}
 			break;
 		case 'r':
 			prng->reroll_opts.block = true;
