@@ -10,7 +10,6 @@
 
 struct prng_mod_priv_t {
 	void *handle;
-	struct prng_t *(*get_prng)(void);
 	struct prng_t *inner;
 };
 
@@ -25,11 +24,6 @@ static int _prng_module_release(void *handle)
 static int prng_module_init(struct prng_t *prng)
 {
 	struct prng_mod_priv_t *priv = prng->ctx;
-
-	if (!priv->inner)
-		priv->inner = priv->get_prng();
-	if (!priv->inner)
-		return -EINVAL;
 
 	return prng_init(priv->inner);
 }
@@ -60,7 +54,10 @@ static int prng_module_cycle(struct prng_t *prng)
 {
 	struct prng_mod_priv_t *priv = prng->ctx;
 
-	return prng_cycle(priv->inner);
+	priv->inner->p = prng->p;
+	int err = prng_cycle(priv->inner);
+	prng->doPrint = priv->inner->doPrint;
+	return err;
 }
 
 static struct prng_t prng_module = {
@@ -88,20 +85,35 @@ struct prng_t *prng_get_module(const char *name)
 	/* dlsym() can retrn NULL on success, but we treat it as an error (invalid module) */
 	if (!fn) {
 		pr_err("Could not read module entry '%s': %s\n", fn_name, dlerror());
-		_prng_module_release(handle);
-		return NULL;
+		goto release_mod;
 	}
+
+	struct prng_t *(*get_prng)(void);
+	*(void **)&get_prng = fn;
 
 	struct prng_t *prng = malloc(sizeof(struct prng_t));
 
 	if (!prng)
-		return NULL;
+		goto release_mod;
 
 	struct prng_mod_priv_t *priv = malloc(sizeof(struct prng_mod_priv_t));
 
+	if (!priv)
+		goto free_prng;
+
 	memcpy(prng, &prng_module, sizeof(struct prng_t));
 	priv->handle = handle;
-	*(void **)&priv->get_prng = fn;
+	priv->inner = get_prng();
+	if (!priv->inner)
+		goto free_priv;
 	prng->ctx = priv;
 	return prng;
+
+free_priv:
+	free(priv);
+free_prng:
+	free(prng);
+release_mod:
+	_prng_module_release(handle);
+	return NULL;
 }
