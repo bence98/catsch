@@ -3,6 +3,7 @@
 TARGET = catsch
 OBJS = cat.o filelist.o rng.o util.o
 OBJS += rng/libc.o rng/urandom.o
+OBJS += rng/mod.o
 OBJS += main.o
 
 .PHONY: all

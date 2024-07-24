@@ -1,5 +1,6 @@
 # Output file
 catsch
+*.so
 # Intermediate objects
 *.o
 # Nano swap files
