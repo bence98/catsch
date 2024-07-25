@@ -15,3 +15,6 @@ clean:
 
 ${TARGET}: ${OBJS}
 	${CC} -o $@ $^
+
+rng/prng_%.so: rng/%.o
+	${CC} --shared -o $@ $^

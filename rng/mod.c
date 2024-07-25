@@ -69,7 +69,9 @@ static struct prng_t prng_module = {
 
 struct prng_t *prng_get_module(const char *name)
 {
-	void *handle = dlopen(name, RTLD_NOW);
+	char fn_name[strlen(name) + strlen("prng__get") + 1];
+	sprintf(fn_name, "prng_%s.so", name);
+	void *handle = dlopen(fn_name, RTLD_NOW);
 
 	if (!handle) {
 		pr_err("Could not load module '%s': %s\n", name, dlerror());
@@ -78,7 +80,6 @@ struct prng_t *prng_get_module(const char *name)
 
 	/* Clear errors */
 	dlerror();
-	char fn_name[strlen(name) + strlen("prng__get") + 1];
 	sprintf(fn_name, "prng_%s_get", name);
 
 	void *fn = dlsym(handle, fn_name);
