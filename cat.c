@@ -8,8 +8,14 @@
 #include "rng.h"
 #include "util.h"
 
-static int _cat_write_out(const char *buf, size_t len, struct prng_t *prng)
+struct cat_priv_t {
+	struct prng_t *prng;
+	int cat_opts;
+};
+
+static int _cat_write_out(const char *buf, size_t len, struct cat_priv_t *priv)
 {
+	struct prng_t *prng = priv->prng;
 	int err = 0;
 
 	if (prng->doPrint) {
@@ -23,7 +29,7 @@ static int _cat_write_out(const char *buf, size_t len, struct prng_t *prng)
 		}
 	}
 
-	if (prng->reroll_opts.block)
+	if (priv->cat_opts & CAT_OPT_REROLL_BLOCK)
 		err = prng_cycle(prng);
 
 	return err;
@@ -31,19 +37,20 @@ static int _cat_write_out(const char *buf, size_t len, struct prng_t *prng)
 
 static int cat_block(FILE *f, void *userdata)
 {
-	struct prng_t *prng = (struct prng_t *)userdata;
+	struct cat_priv_t *priv = (struct cat_priv_t *)userdata;
+	struct prng_t *prng = priv->prng;
 	char buf[1024];
 	int err = 0;
 
 	while (!feof(f)) {
 		size_t len = fread(buf, 1, sizeof(buf), f);
-		err = _cat_write_out(buf, len, prng);
+		err = _cat_write_out(buf, len, priv);
 
 		if (err)
 			return err;
 	}
 
-	if (prng->reroll_opts.file)
+	if (priv->cat_opts & CAT_OPT_REROLL_FILE)
 		err = prng_cycle(prng);
 
 	return err;
@@ -51,20 +58,21 @@ static int cat_block(FILE *f, void *userdata)
 
 static int cat_tabby(FILE *f, void *userdata)
 {
-	struct prng_t *prng = (struct prng_t *)userdata;
+	struct cat_priv_t *priv = (struct cat_priv_t *)userdata;
+	struct prng_t *prng = priv->prng;
 	size_t buf_len = 0;
 	char *buf = NULL;
 	ssize_t len;
 	int err = 0;
 
 	while ((len = getline(&buf, &buf_len, f)) != -1) {
-		err = _cat_write_out(buf, len, prng);
+		err = _cat_write_out(buf, len, priv);
 
 		if (err)
 			return err;
 	}
 
-	if (prng->reroll_opts.file)
+	if (priv->cat_opts & CAT_OPT_REROLL_FILE)
 		err = prng_cycle(prng);
 
 	free(buf);
@@ -77,12 +85,17 @@ int cat_files(struct flist *l, struct prng_t *prng, int opts)
 	int (*do_cat)(FILE *f, void *userdata);
 	int err;
 
+	struct cat_priv_t priv = {
+		.prng = prng,
+		.cat_opts = opts,
+	};
+
 	do_cat = opts & CAT_OPT_LINEWISE ? cat_tabby : cat_block;
 
 	if (l->head) {
-		err = flist_foreach(l, do_cat, prng);
+		err = flist_foreach(l, do_cat, &priv);
 	} else {
-		err = do_cat(stdin, prng);
+		err = do_cat(stdin, &priv);
 	}
 
 	return err;

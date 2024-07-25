@@ -94,10 +94,10 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case 'r':
-			prng->reroll_opts.block = true;
+			cat_opts |= CAT_OPT_REROLL_BLOCK;
 			break;
 		case 'f':
-			prng->reroll_opts.file = true;
+			cat_opts |= CAT_OPT_REROLL_FILE;
 			break;
 		case 'l':
 			cat_opts |= CAT_OPT_LINEWISE;

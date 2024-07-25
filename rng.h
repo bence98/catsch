@@ -10,9 +10,6 @@ struct prng_t {
 	void *ctx;
 	double p;
 	bool doPrint;
-	struct {
-		bool block, file;
-	} reroll_opts;
 };
 
 struct prng_t *prng_get_default(void);
