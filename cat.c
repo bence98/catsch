@@ -92,7 +92,7 @@ int cat_files(struct flist *l, struct prng_t *prng, int opts)
 
 	do_cat = opts & CAT_OPT_LINEWISE ? cat_tabby : cat_block;
 
-	if (l->head) {
+	if (!flist_is_empty(l)) {
 		err = flist_foreach(l, do_cat, &priv);
 	} else {
 		err = do_cat(stdin, &priv);

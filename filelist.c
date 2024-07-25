@@ -93,7 +93,7 @@ int flist_add(struct flist *l, const char *path)
 	e->name = path;
 	e->f    = NULL;
 
-	if (!l->head)
+	if (flist_is_empty(l))
 		l->head = e;
 
 	if (l->tail)

@@ -10,6 +10,8 @@ struct flist *flist_new(void);
 int flist_delete(struct flist *);
 int flist_add(struct flist *, const char *);
 
+#define flist_is_empty(lst) (!((lst)->head))
+
 #ifdef FLIST_READ
 #include <stdio.h>
 
