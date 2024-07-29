@@ -16,5 +16,8 @@ clean:
 ${TARGET}: ${OBJS}
 	${CC} -o $@ $^
 
+${TARGET}-standalone: ${OBJS}
+	${CC} -Wl,-rpath,'$$ORIGIN'/rng -o $@ $^
+
 rng/prng_%.so: rng/%.o
 	${CC} --shared -o $@ $^
