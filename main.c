@@ -44,7 +44,7 @@ static void print_help(const char *prog)
 		"\t-r/--reroll \t- re-roll random number after each write (1 KiB by default)\n"
 		"\t-f/--reroll-files \t- re-roll random number for each input file\n"
 		"\t-l/--linewise \t- read files line-by-line. Use with -r to randomize lines\n"
-		"\t-g/--generator [gen] \t- use a specific RNG. Possible values: libc, urandom"
+		"\t-g/--generator [gen] \t- use a specific RNG. Possible values: libc, urandom\n"
 		"", prog);
 }
 
